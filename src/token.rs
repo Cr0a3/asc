@@ -1,4 +1,4 @@
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Token {
     EOF,
 
@@ -6,6 +6,12 @@ pub enum Token {
 
     EQUAL,
     ADD, SUB, MUL, DIV,
+
+    RAX, RBX, RCX, RDX,
+    EAX, EBX, ECX, EDX,
+     AX,  BX,  CX,  DX,
+
+    LBracket, RBracket,
 
     NoToken, Error,
 }

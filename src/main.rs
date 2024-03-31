@@ -1,10 +1,12 @@
 use std::path::PathBuf;
+use print::print_tokens;
 use PrintLib::colorize::Colorize;
 use clap::Parser;
 
 pub mod token;
 pub mod lexer;
 pub mod codegen;
+pub mod print;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -43,6 +45,9 @@ fn main() {
             println!("{} {}", "error:".red().bold(), e);
         },
     };
+
+    print_tokens(&lexer.tokens);
+    println!("tokens: {}", lexer.tokens.len());
 
     let mut code_gen = codegen::CodeGen::new();
     match code_gen.gen(cmd.outfile) {
