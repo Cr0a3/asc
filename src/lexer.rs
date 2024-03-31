@@ -27,17 +27,19 @@ impl Lexer {
 
         let mut keywords: HashMap<String, Token> = HashMap::new();
 
-        keywords.insert(String::from("rax"), Token::RAX);   //
-        keywords.insert(String::from("rbx"), Token::RBX);   //
-        keywords.insert(String::from("rdx"), Token::RDX);   //
-        keywords.insert(String::from("eax"), Token::EAX);   //
-        keywords.insert(String::from("ebx"), Token::EBX);   //
-        keywords.insert(String::from("ecx"), Token::ECX);   //
-        keywords.insert(String::from("edx"), Token::EDX);   //
-        keywords.insert(String::from("ax"), Token::AX);     //
-        keywords.insert(String::from("bx"), Token::BX);     //
-        keywords.insert(String::from("cx"), Token::CX);     //
-        keywords.insert(String::from("dx"), Token::DX);     //
+        keywords.insert(String::from("rax"), Token::RAX);   // RAX
+        keywords.insert(String::from("rbx"), Token::RBX);   // RBX
+        keywords.insert(String::from("rcx"), Token::RCX);   // RCX
+        keywords.insert(String::from("rdx"), Token::RDX);   // RDX
+        keywords.insert(String::from("eax"), Token::EAX);   // EAX
+        keywords.insert(String::from("ebx"), Token::EBX);   // EBX
+        keywords.insert(String::from("ecx"), Token::ECX);   // ECX
+        keywords.insert(String::from("edx"), Token::EDX);   // EDX
+        keywords.insert(String::from("ax"), Token::AX);     // AX
+        keywords.insert(String::from("bx"), Token::BX);     // BX
+        keywords.insert(String::from("cx"), Token::CX);     // CX
+        keywords.insert(String::from("dx"), Token::DX);     // DX
+        keywords.insert(String::from("ret"), Token::RET);   // ret
 
         Self {
             tokens: vec![],
@@ -136,7 +138,6 @@ impl Lexer {
         self.lines = content.lines().map(String::from).collect();
         self.filename = format!("{}", path.display());
 
-        self.advance();
         while !self.is_at_end() {
             self.start = self.pos.clone();
 

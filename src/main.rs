@@ -18,6 +18,10 @@ struct Cli {
     #[arg(short, long, value_name = "FILE")]
     out: Option<PathBuf>,
 
+    /// Should additional information be printed
+    #[arg(short, long, action)]
+    verbose: bool,
+
 }
 
 struct Cmd {
@@ -46,11 +50,13 @@ fn main() {
         },
     };
 
-    print_tokens(&lexer.tokens);
-    println!("tokens: {}", lexer.tokens.len());
+    if cli.verbose {
+        print_tokens(&lexer.tokens);
+    }
 
     let mut code_gen = codegen::CodeGen::new();
-    match code_gen.gen(cmd.outfile) {
+    code_gen.gen(lexer.tokens);
+    match code_gen.build(cmd.outfile) {
         Ok(_) => {},
         Err(e) => {
             println!("{} {}", "error:".red().bold(), e);

@@ -11,6 +11,8 @@ pub enum Token {
     EAX, EBX, ECX, EDX,
      AX,  BX,  CX,  DX,
 
+    RET,
+
     LBracket, RBracket,
 
     NoToken, Error,
