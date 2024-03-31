@@ -1,0 +1,13 @@
+[package]
+name = "asc"
+version = "0.1.0"
+edition = "2021"
+description = "The ASM++ compiler"
+author = ["Cr0a3"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+CodeGenLib = { path = "../CodeGenLib" }
+PrintLib = "1.5.2"
+clap = { version = "4.5.4", features = ["derive", "unstable-doc"] }
