@@ -1,10 +1,9 @@
 use std::{collections::HashMap, env::current_exe, path::PathBuf};
-use CodeGenLib::{ArtifactError, Builder, Function};
+use CodeGenLib::{AdressManager, ArtifactError, Builder, Function};
 use crate::token::Token;
 
 pub struct CodeGen {
     builder: Builder,
-    functs: HashMap<String, Function>,
 }
 
 impl CodeGen {
@@ -12,7 +11,6 @@ impl CodeGen {
         let builder = Builder::new();
         Self {
             builder: builder,
-            functs: HashMap::new(),
         }
     }
 
@@ -20,23 +18,19 @@ impl CodeGen {
 
         let mut func_scope = false;
 
-        let mut func_scope_name = String::new();
+        let mut funct: &mut Function = &mut Function::new("null", &mut {let adrmng = AdressManager::new((0, 0)); adrmng});
 
         for token in tokens {
             match token {
                 Token::RET => {
                     if func_scope {
-                        print!("ret");
-                        let func = self.functs.get_mut(&func_scope_name).unwrap();
-                        func.asm_ret();
+                        funct.asm_ret();
                     }
                 },
                 Token::IDENT(x) => {
                     if !func_scope {
-                        let mut func = self.builder.add_function(x.clone().as_str()).to_owned();
-                        self.functs.insert(x.clone(), func);
+                        funct = self.builder.add_function(x.clone().as_str());
                         func_scope = true;
-                        func_scope_name = x;
                     } else {
 
                     }
