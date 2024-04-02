@@ -90,11 +90,7 @@ impl Lexer {
     }
 
     fn peek(&self) -> char {
-        self.file.chars().nth(self.pos -1).expect("code chars out of range")
-    }
-
-    fn peek_next(&self) -> char {
-        self.file.chars().nth(self.pos).expect("code chars out of range")
+        self.file.chars().nth(self.pos -1).unwrap_or('\0')
     }
 
     pub fn scan_token(&mut self) {
