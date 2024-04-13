@@ -1,0 +1,27 @@
+add {
+    eax = 5
+    ebx = 4
+    eax + ebx
+    ret
+}
+
+sub {
+    eax = 9
+    ebx = 2
+    eax - ebx
+    ret
+}
+
+mul {
+    eax = 55
+    ebx = 2
+    eax * ebx
+    ret
+}
+
+div {
+    eax = 10
+    ebx = 2
+    eax / ebx
+    ret
+}
