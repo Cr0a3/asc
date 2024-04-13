@@ -1,27 +1,26 @@
-use std::{collections::VecDeque, path::PathBuf};
-use CodeGenLib::{AdressManager, Builder, Function};
+use crate::{token::Token, util::{is_reg, to_reg}};
+use std::{
+    collections::{HashMap, VecDeque},
+    path::PathBuf,
+};
+use CodeGenLib::{asm::AsmInstructionEnum, BinFormat, Builder, IR::*};
 use PrintLib::colorize::Colorize;
-use crate::token::Token;
 
 pub struct CodeGen {
-    builder: Builder,
+    obj: Builder,
     tokens: VecDeque<Token>,
-
-    func_scope: bool,
-    funct: Function,
+    funct: HashMap<String, Vec<AsmInstructionEnum>>,
 }
 
 impl CodeGen {
     pub fn new() -> Self {
         let builder = Builder::new();
-        let func = Function::new("null", &mut {let adrmng = AdressManager::new((0, 0)); adrmng});
 
         Self {
-            builder: builder,
+            obj: builder,
             tokens: VecDeque::new(),
 
-            func_scope: false,
-            funct: func,
+            funct: HashMap::new(),
         }
     }
 
@@ -35,59 +34,116 @@ impl CodeGen {
         ret
     }
 
-    fn scan(&mut self) {
-        match self.advance() {
-            Token::RET => {
-                if self.func_scope {
-                    self.funct.asm_ret();
-                } else {
-                    println!("{}{} unexpected instruction 'ret'", "error".red().bold(), ":".bold());
-                    println!("{} | consider putting it into a function:", "+".green().bold());
-                    println!("{} | {}", "+".green().bold(), "function {".gray());
-                    println!("{} | {}", "+".green().bold(), "\tret".gray());
-                    println!("{} | {}", "+".green().bold(), "}".gray());
-                }
-            },
-            Token::IDENT(x) => {
-                if !self.func_scope {
-                    let peek = self.peek();
-                    println!("self.peek() => {:#?}", peek);
-                    if peek == Token::LBracket {
-                        self.funct = self.builder.add_function(x.clone().as_str()).to_owned();
-                        self.func_scope = true;
+    fn scan_func(&mut self) -> (String, Vec<AsmInstructionEnum>) {
+        let mut asm: Vec<AsmInstructionEnum> = vec![];
+        let mut name: String = String::from("_asc_error");
+
+        let mut scope = false;
+
+        loop {
+            let tok = self.advance();
+
+            match tok {
+                Token::IDENT(x) => {
+                    if !scope {
+                        let peek = self.peek();
+                        if peek == Token::LBracket {
+                            name = x;
+                            scope = true;
+                        } else {
+                            println!(
+                                "{}{} unexpected token '{:#?}' after function",
+                                "error".red().bold(),
+                                ":".bold(),
+                                peek
+                            );
+                            match peek {
+                                Token::IDENT(x) => {
+                                    println!("{} | {x}{}", "+".green().bold(), "{".gray())
+                                }
+                                _ => {}
+                            }
+                        }
                     } else {
-                        println!("{}{} unexpected token '{:#?}' after function", "error".red().bold(), ":".bold(), peek);
-                        match peek {
-                            Token::IDENT(x) => println!("{} | {x}{}", "+".green().bold(), "{".gray()),
-                            _ => {}
+                        if x == "ret" {
+                            asm.push (Ret);
+                        } else if x == "nop" {
+                            asm.push (Nop);
+                        } else if is_reg(&x) {
+                            let reg = to_reg(&x);
+
+                            let mut op = String::from("rax");
+
+                            if self.peek() == Token::EQUAL {
+                                self.advance();
+                                op = {
+                                    let adv = self.advance();
+                                    match adv {
+                                        Token::IDENT(x) => x.clone(),
+                                        Token::NUM(x) => x,
+                                        _ => {
+                                            println!("unexpected token");
+                                            break;
+                                        }
+                                    }
+                                };
+                            } else {
+                                println!("Unexpected register {:?}", reg);
+                            }
+
+                            if is_reg(&op) {
+                                asm.push(MovReg(reg, to_reg(&op)));
+                            } else {
+                                asm.push( MovVal(reg, op.parse::<u64>().unwrap()));
+                            }
+                        } else {
+                            println!(
+                                "{}{} unexpected identifer '{}'",
+                                "error".red().bold(),
+                                ":".bold(),
+                                x
+                            );
+
                         }
                     }
-                } else {
-                    println!("{}{} unexpected identifer '{}'", "error".red().bold(), ":".bold(), x);
                 }
-            }
 
-            Token::RBracket => {
-                if self.func_scope {
-                    self.func_scope = false;
-                } else {
-                    println!("{}: unexpected '}}'", "error".red().bold());
+                Token::RBracket => {
+                    if scope {
+                        break;
+                    } else {
+                        println!("{}: unexpected '}}'", "error".red().bold());
+                    }
                 }
-            }
 
-            _ => {}
+                Token::EOF => {
+                    break;
+                }
+
+                _ => {}
+            }
         }
+
+        (name, asm)
     }
 
-    pub fn gen(&mut self, tokens: Vec<Token> ) {
+    pub fn gen(&mut self, tokens: Vec<Token>) {
         self.tokens = tokens.into();
 
         while self.tokens.len() > 0 {
-            self.scan()
+            let scan = self.scan_func();
+            self.funct.insert(scan.0, scan.1);
         }
     }
 
     pub fn build(&mut self, path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
-        self.builder.build(format!("{}", path.display()).as_str(), CodeGenLib::BinaryFormat::Coff)
+        for func in self.funct.iter() {
+            self.obj.define(func.0, true, func.1.to_owned())?;
+        }
+
+        self.obj
+            .write(format!("{}", path.display()).as_str(), BinFormat::host())?;
+
+        Ok(())
     }
 }

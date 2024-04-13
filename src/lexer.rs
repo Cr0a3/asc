@@ -1,4 +1,9 @@
-use std::{collections::HashMap, fs::File, io::{self, Read}, path::PathBuf};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{self, Read},
+    path::PathBuf,
+};
 use PrintLib::error::ErrorFactory;
 
 use crate::token::Token;
@@ -24,22 +29,7 @@ pub struct Lexer {
 
 impl Lexer {
     pub fn new() -> Self {
-
-        let mut keywords: HashMap<String, Token> = HashMap::new();
-
-        keywords.insert(String::from("rax"), Token::RAX);   // RAX
-        keywords.insert(String::from("rbx"), Token::RBX);   // RBX
-        keywords.insert(String::from("rcx"), Token::RCX);   // RCX
-        keywords.insert(String::from("rdx"), Token::RDX);   // RDX
-        keywords.insert(String::from("eax"), Token::EAX);   // EAX
-        keywords.insert(String::from("ebx"), Token::EBX);   // EBX
-        keywords.insert(String::from("ecx"), Token::ECX);   // ECX
-        keywords.insert(String::from("edx"), Token::EDX);   // EDX
-        keywords.insert(String::from("ax"), Token::AX);     // AX
-        keywords.insert(String::from("bx"), Token::BX);     // BX
-        keywords.insert(String::from("cx"), Token::CX);     // CX
-        keywords.insert(String::from("dx"), Token::DX);     // DX
-        keywords.insert(String::from("ret"), Token::RET);   // ret
+        let /*mut*/ keywords: HashMap<String, Token> = HashMap::new();
 
         Self {
             tokens: vec![],
@@ -62,7 +52,7 @@ impl Lexer {
     }
 
     fn is_at_end(&self) -> bool {
-        self.pos >= (self.file.len() -1)
+        self.pos >= (self.file.len() - 1)
     }
 
     fn advance(&mut self) -> char {
@@ -73,16 +63,14 @@ impl Lexer {
             self.pos_in_line = 0;
             self.line += 1;
 
-            if let Some(first) = self.lines.get(self.line -1).cloned() {
+            if let Some(first) = self.lines.get(self.line - 1).cloned() {
                 self.linestr = first;
             } else {
                 eprintln!("error, while resolving new line");
             }
 
             peek_res = self.advance(); //result = new advance
-
-        }
-        else {
+        } else {
             self.pos_in_line += 1;
         }
 
@@ -90,31 +78,45 @@ impl Lexer {
     }
 
     fn peek(&self) -> char {
-        self.file.chars().nth(self.pos -1).unwrap_or('\0')
+        self.file.chars().nth(self.pos - 1).unwrap_or('\0')
     }
 
     pub fn scan_token(&mut self) {
         let c = self.advance();
         match c {
-            '\n' => {},
-            '\r' => {},
-            '\t' => {},
-            ' ' =>  {},
-            '+' =>  { self.tokens.push( Token::ADD );   },
-            '-' =>  { self.tokens.push( Token::ADD );   },
-            '*' =>  { self.tokens.push( Token::ADD );   },
-            '/' =>  { self.tokens.push( Token::DIV );   },
-            '=' =>  { self.tokens.push( Token::EQUAL ); },
-            '{' =>  { self.tokens.push( Token::LBracket); },
-            '}' =>  { self.tokens.push( Token::RBracket); },
+            '\n' => {}
+            '\r' => {}
+            '\t' => {}
+            ' ' => {}
+            '+' => {
+                self.tokens.push(Token::ADD);
+            }
+            '-' => {
+                self.tokens.push(Token::ADD);
+            }
+            '*' => {
+                self.tokens.push(Token::ADD);
+            }
+            '/' => {
+                self.tokens.push(Token::DIV);
+            }
+            '=' => {
+                self.tokens.push(Token::EQUAL);
+            }
+            '{' => {
+                self.tokens.push(Token::LBracket);
+            }
+            '}' => {
+                self.tokens.push(Token::RBracket);
+            }
             _ => {
-                if  c >= '0' && c <= '9'{
+                if c >= '0' && c <= '9' {
                     self.num();
-                }
-                else if  (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_' || c == '-' {
+                } else if (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_' || c == '-' {
                     self.identifer();
                 } else {
-                    let mut e_fab = ErrorFactory::new("".into(), format!("unexpected character '{c}'"));
+                    let mut e_fab =
+                        ErrorFactory::new("".into(), format!("unexpected character '{c}'"));
                     e_fab.add_arrow(self.filename.to_string(), self.line, self.pos);
                     e_fab.add_code_line(self.linestr.clone(), true, self.line, false);
                     e_fab.add_where(self.pos, 1, false, String::new());
@@ -155,7 +157,7 @@ impl Lexer {
 
         str = str.replace("_", "");
 
-        self.tokens.push( Token::NUM( str ) );
+        self.tokens.push(Token::NUM(str));
     }
 
     pub fn identifer(&mut self) {
@@ -163,17 +165,22 @@ impl Lexer {
 
         let mut ad: char = self.peek();
 
-        while (ad >= 'A' && ad <= 'Z') || (ad >= 'a' && ad <= 'z') || ad == '_' || (ad >= '0' && ad <= '9') {
+        while (ad >= 'A' && ad <= 'Z')
+            || (ad >= 'a' && ad <= 'z')
+            || ad == '_'
+            || (ad >= '0' && ad <= '9')
+        {
             str.push(ad);
             ad = self.advance();
         }
 
         match self.keys.get(&str) {
             Some(&ref keyword) => {
-                self.tokens.push( keyword.to_owned() );
+                self.tokens.push(keyword.to_owned());
             }
-            _ => { // if str is not in the keyword list
-                self.tokens.push( Token::IDENT( str ) );
+            _ => {
+                // if str is not in the keyword list
+                self.tokens.push(Token::IDENT(str));
             }
         }
     }

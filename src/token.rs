@@ -2,18 +2,18 @@
 pub enum Token {
     EOF,
 
-    IDENT(String), NUM(String), 
+    IDENT(String),
+    NUM(String),
 
     EQUAL,
-    ADD, SUB, MUL, DIV,
+    ADD,
+    SUB,
+    MUL,
+    DIV,
 
-    RAX, RBX, RCX, RDX,
-    EAX, EBX, ECX, EDX,
-     AX,  BX,  CX,  DX,
+    LBracket,
+    RBracket,
 
-    RET,
-
-    LBracket, RBracket,
-
-    NoToken, Error,
+    NoToken,
+    Error,
 }

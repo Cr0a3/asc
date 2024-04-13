@@ -1,12 +1,13 @@
-use std::path::PathBuf;
-use print::print_tokens;
-use PrintLib::colorize::Colorize;
 use clap::Parser;
+use print::print_tokens;
+use std::path::PathBuf;
+use PrintLib::colorize::Colorize;
 
-pub mod token;
-pub mod lexer;
 pub mod codegen;
+pub mod lexer;
 pub mod print;
+pub mod token;
+pub mod util;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -21,7 +22,6 @@ struct Cli {
     /// Should additional information be printed
     #[arg(short, long, action)]
     verbose: bool,
-
 }
 
 struct Cmd {
@@ -33,21 +33,26 @@ fn main() {
     let cli = Cli::parse();
 
     let to_comp = cli.filename;
-    let to_comp_stem = PathBuf::from(to_comp.clone()).file_stem().unwrap().to_str().unwrap().to_string();
+    let to_comp_stem = PathBuf::from(to_comp.clone())
+        .file_stem()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
 
     let cmd = Cmd {
         file: PathBuf::from(&to_comp),
-        outfile: cli.out.unwrap_or(
-            PathBuf::from(format!("{}.o", to_comp_stem))
-        ),
+        outfile: cli
+            .out
+            .unwrap_or(PathBuf::from(format!("{}.o", to_comp_stem))),
     };
 
     let mut lexer = lexer::Lexer::new();
     match lexer.scan(cmd.file) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             println!("{} {}", "error:".red().bold(), e);
-        },
+        }
     };
 
     if cli.verbose {
@@ -57,9 +62,9 @@ fn main() {
     let mut code_gen = codegen::CodeGen::new();
     code_gen.gen(lexer.tokens);
     match code_gen.build(cmd.outfile) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => {
             println!("{} {}", "error:".red().bold(), e);
-        },
+        }
     };
 }
