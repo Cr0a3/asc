@@ -72,11 +72,11 @@ impl CodeGen {
                         } else if is_reg(&x) {
                             let reg = to_reg(&x);
 
-                            let mut op = String::from("rax");
+                            let peek = self.peek();
 
-                            if self.peek() == Token::EQUAL {
+                            if peek == Token::EQUAL {
                                 self.advance();
-                                op = {
+                                let op = {
                                     let adv = self.advance();
                                     match adv {
                                         Token::IDENT(x) => x.clone(),
@@ -87,14 +87,33 @@ impl CodeGen {
                                         }
                                     }
                                 };
+                                
+                                if is_reg(&op) {
+                                    asm.push(MovReg(reg, to_reg(&op)));
+                                } else {
+                                    asm.push( MovVal(reg, op.parse::<u64>().unwrap()));
+                                }
+                            } else if peek == Token::ADD {
+                                self.advance();
+                                let op = {
+                                    let adv = self.advance();
+                                    match adv {
+                                        Token::IDENT(x) => x.clone(),
+                                        Token::NUM(x) => x,
+                                        _ => {
+                                            println!("unexpected token");
+                                            break;
+                                        }
+                                    }
+                                };
+
+                                if is_reg(&op) {
+                                    asm.push(AddReg(reg, to_reg(&op)));
+                                } else {
+                                    asm.push( AddVal(reg, op.parse::<u64>().unwrap()));
+                                }
                             } else {
                                 println!("Unexpected register {:?}", reg);
-                            }
-
-                            if is_reg(&op) {
-                                asm.push(MovReg(reg, to_reg(&op)));
-                            } else {
-                                asm.push( MovVal(reg, op.parse::<u64>().unwrap()));
                             }
                         } else {
                             println!(
