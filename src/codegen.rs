@@ -159,6 +159,24 @@ impl CodeGen {
                             } else {
                                 println!("Unexpected register {:?}", reg);
                             }
+                        } else if x == "push" {
+                            let op = {
+                                let adv = self.advance();
+                                match adv {
+                                    Token::IDENT(x) => x.clone(),
+                                    Token::NUM(x) => x,
+                                    _ => {
+                                        println!("unexpected token");
+                                        break;
+                                    }
+                                }
+                            };
+
+                            if is_reg(&op) {
+                                asm.push(Push(to_reg(&op)));
+                            } else {
+                                asm.push( PushVal(op.parse::<u32>().unwrap()));
+                            }
                         } else {
                             println!(
                                 "{}{} unexpected identifer '{}'",
