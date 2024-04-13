@@ -10,6 +10,8 @@ pub struct CodeGen {
     obj: Builder,
     tokens: VecDeque<Token>,
     funct: HashMap<String, Vec<AsmInstructionEnum>>,
+
+    error: bool,
 }
 
 impl CodeGen {
@@ -21,6 +23,8 @@ impl CodeGen {
             tokens: VecDeque::new(),
 
             funct: HashMap::new(),
+
+            error: false,
         }
     }
 
@@ -63,6 +67,8 @@ impl CodeGen {
                                 }
                                 _ => {}
                             }
+
+                            self.error = true;
                         }
                     } else {
                         if x == "ret" {
@@ -111,6 +117,44 @@ impl CodeGen {
                                     asm.push(AddReg(reg, to_reg(&op)));
                                 } else {
                                     asm.push( AddVal(reg, op.parse::<u64>().unwrap()));
+                                }
+                            } else if peek == Token::SUB {
+                                self.advance();
+                                let op = {
+                                    let adv = self.advance();
+                                    match adv {
+                                        Token::IDENT(x) => x.clone(),
+                                        Token::NUM(x) => x,
+                                        _ => {
+                                            println!("unexpected token");
+                                            break;
+                                        }
+                                    }
+                                };
+
+                                if is_reg(&op) {
+                                    asm.push( SubReg(reg, to_reg(&op)));
+                                } else {
+                                    asm.push( SubVal(reg, op.parse::<u64>().unwrap()));
+                                }
+                            } else if peek == Token::MUL {
+                                self.advance();
+                                let op = {
+                                    let adv = self.advance();
+                                    match adv {
+                                        Token::IDENT(x) => x.clone(),
+                                        Token::NUM(x) => x,
+                                        _ => {
+                                            println!("unexpected token");
+                                            break;
+                                        }
+                                    }
+                                };
+
+                                if is_reg(&op) {
+                                    asm.push(MulReg(reg, to_reg(&op)));
+                                } else {
+                                    asm.push( MulVal(reg, op.parse::<u64>().unwrap()));
                                 }
                             } else {
                                 println!("Unexpected register {:?}", reg);

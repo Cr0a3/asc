@@ -92,10 +92,10 @@ impl Lexer {
                 self.tokens.push(Token::ADD);
             }
             '-' => {
-                self.tokens.push(Token::ADD);
+                self.tokens.push(Token::SUB);
             }
             '*' => {
-                self.tokens.push(Token::ADD);
+                self.tokens.push(Token::MUL);
             }
             '/' => {
                 self.tokens.push(Token::DIV);
