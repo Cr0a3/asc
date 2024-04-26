@@ -2,6 +2,12 @@
 
 The compiler for the ASM++ language
 
+## Warning
+
+> The Code of this compiler is complete trash. (No ast)
+
+> There aren't any error messages
+
 ## Example
 
 Simple example how to create a simple programm in ASM++:
