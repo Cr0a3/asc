@@ -123,11 +123,15 @@ impl CodeGen {
                                     let data = data.as_bytes();
                                     let data = data.to_vec();
 
+                                    let name = self.request_label_name();
+
                                     self.obj.define_label(
-                                        &self.request_label_name(), 
+                                        &name, 
                                         false,
                                         data
                                     );
+
+                                    asm.push( MovPtr( to_reg(&x), name ) );
                                 } else {
                                     asm.push( MovVal(reg, op.parse::<i64>().unwrap()));
                                 }
@@ -251,6 +255,8 @@ impl CodeGen {
 
     pub fn build(&mut self, path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
         for func in self.funct.iter() {
+            println!("{:?}", func);
+
             self.obj.define(func.0, true, func.1.to_owned())?;
         }
 

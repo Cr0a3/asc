@@ -1,5 +1,10 @@
 main {
-    eax = ptr "Hello World!"
+    ecx = ptr "Hello World!"
+    eax = 0
+    
     call printf
+
+    eax = 0
+
     ret
 }
