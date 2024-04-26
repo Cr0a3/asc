@@ -3,6 +3,7 @@ pub enum Token {
     EOF,
 
     IDENT(String),
+    STR(String),
     NUM(String),
 
     EQUAL,

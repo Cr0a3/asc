@@ -109,6 +109,11 @@ impl Lexer {
             '}' => {
                 self.tokens.push(Token::RBracket);
             }
+
+            '"' => {
+                self.string();
+            }
+
             _ => {
                 if c >= '0' && c <= '9' {
                     self.num();
@@ -158,6 +163,28 @@ impl Lexer {
         str = str.replace("_", "");
 
         self.tokens.push(Token::NUM(str));
+    }
+
+    pub fn string(&mut self) {
+        let mut str = String::new();
+
+        while self.advance() != '"' && !self.is_at_end() {
+            let ad = self.peek();
+            str.push(ad);
+        }
+
+        if self.is_at_end() {
+            
+            let mut e_fab =
+                ErrorFactory::new("".into(), format!("undetermend string"));
+            e_fab.add_arrow(self.filename.to_string(), self.line, self.pos);
+            e_fab.add_code_line(self.linestr.clone(), true, self.line, false);
+            e_fab.add_where(self.pos, 1, false, String::new());
+        }
+
+        self.advance(); // skip the closing "
+
+        self.tokens.push( Token::STR(str) );
     }
 
     pub fn identifer(&mut self) {

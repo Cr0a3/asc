@@ -3,7 +3,7 @@ use std::{
     collections::{HashMap, VecDeque},
     path::PathBuf,
 };
-use CodeGenLib::{asm::AsmInstructionEnum, BinFormat, Builder, IR::*};
+use CodeGenLib::{asm::AsmInstructionEnum, Builder, IR::*};
 use PrintLib::colorize::Colorize;
 
 pub struct CodeGen {
@@ -11,21 +11,27 @@ pub struct CodeGen {
     tokens: VecDeque<Token>,
     funct: HashMap<String, Vec<AsmInstructionEnum>>,
 
+    labels: usize,
+
     error: bool,
 }
 
 impl CodeGen {
     pub fn new() -> Self {
-        let builder = Builder::new();
-
         Self {
-            obj: builder,
+            obj: Builder::new(),
             tokens: VecDeque::new(),
 
             funct: HashMap::new(),
 
             error: false,
+
+            labels: 0,
         }
+    }
+
+    fn request_label_name(&self) -> String {
+        self.labels.to_string()
     }
 
     fn advance(&mut self) -> Token {
@@ -75,6 +81,15 @@ impl CodeGen {
                             asm.push (Ret);
                         } else if x == "nop" {
                             asm.push (Nop);
+                        } else if x == "call" {
+                            let peek = self.peek();
+                            match peek {
+                                Token::IDENT(x) => { 
+                                    asm.push(Call(x)); 
+                                    self.advance(); // so index gets updated
+                                },
+                                _ => { println!("needs to be identifier"); }
+                            }
                         } else if is_reg(&x) {
                             let reg = to_reg(&x);
 
@@ -96,8 +111,25 @@ impl CodeGen {
                                 
                                 if is_reg(&op) {
                                     asm.push(MovReg(reg, to_reg(&op)));
+                                } else if op == "ptr" {
+                                    let data = match self.advance() {
+                                        Token::STR(string) => string,
+                                        token => {
+                                            println!("name needs to be str. found {:?}", token);
+                                            break;
+                                        }
+                                    };
+
+                                    let data = data.as_bytes();
+                                    let data = data.to_vec();
+
+                                    self.obj.define_label(
+                                        &self.request_label_name(), 
+                                        false,
+                                        data
+                                    );
                                 } else {
-                                    asm.push( MovVal(reg, op.parse::<u64>().unwrap()));
+                                    asm.push( MovVal(reg, op.parse::<i64>().unwrap()));
                                 }
                             } else if peek == Token::ADD {
                                 self.advance();
@@ -116,7 +148,7 @@ impl CodeGen {
                                 if is_reg(&op) {
                                     asm.push(AddReg(reg, to_reg(&op)));
                                 } else {
-                                    asm.push( AddVal(reg, op.parse::<u64>().unwrap()));
+                                    asm.push( AddVal(reg, op.parse::<i64>().unwrap()));
                                 }
                             } else if peek == Token::SUB {
                                 self.advance();
@@ -135,7 +167,7 @@ impl CodeGen {
                                 if is_reg(&op) {
                                     asm.push( SubReg(reg, to_reg(&op)));
                                 } else {
-                                    asm.push( SubVal(reg, op.parse::<u64>().unwrap()));
+                                    asm.push( SubVal(reg, op.parse::<i64>().unwrap()));
                                 }
                             } else if peek == Token::MUL {
                                 self.advance();
@@ -154,7 +186,7 @@ impl CodeGen {
                                 if is_reg(&op) {
                                     asm.push(MulReg(reg, to_reg(&op)));
                                 } else {
-                                    asm.push( MulVal(reg, op.parse::<u64>().unwrap()));
+                                    asm.push( MulVal(reg, op.parse::<i64>().unwrap()));
                                 }
                             } else {
                                 println!("Unexpected register {:?}", reg);
@@ -175,7 +207,7 @@ impl CodeGen {
                             if is_reg(&op) {
                                 asm.push(Push(to_reg(&op)));
                             } else {
-                                asm.push( PushVal(op.parse::<u32>().unwrap()));
+                                asm.push( PushVal(op.parse::<i64>().unwrap()));
                             }
                         } else {
                             println!(
@@ -223,7 +255,8 @@ impl CodeGen {
         }
 
         self.obj
-            .write(format!("{}", path.display()).as_str(), BinFormat::host())?;
+            .write(format!("{}", path.display()).as_str()
+        )?;
 
         Ok(())
     }

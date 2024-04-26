@@ -18,10 +18,3 @@ mul {
     eax * ebx
     ret
 }
-
-div {
-    eax = 10
-    ebx = 2
-    eax / ebx
-    ret
-}
